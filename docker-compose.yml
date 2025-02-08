@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  haproxy:
+    build: ./haproxy
+    ports:
+      - "8080:8080"  # HTTP
+      - "8443:8443"  # HTTPS
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - wsupdates
+      - wsnode1
+      - wsnode2
+      - wsnode3
+    networks:
+      - ws_network
+
+  wsupdates:
+    build: ./wsupdates
+    environment:
+      - DB_PATH=/data/ws.db
+      - API_KEY=dev_api_key_123
+    volumes:
+      - ws_data:/data
+    ports:
+      - "8000:80"
+    networks:
+      - ws_network
+
+  wsnode1:
+    build: ./wsnode
+    environment:
+      - NODE_ID=node1
+      - PORT=8081
+      - WS_UPDATES_URL=http://wsupdates:80
+      - API_KEY=dev_api_key_123
+    ports:
+      - "8081:8081"
+    networks:
+      - ws_network
+
+  wsnode2:
+    build: ./wsnode
+    environment:
+      - NODE_ID=node2
+      - PORT=8082
+      - WS_UPDATES_URL=http://wsupdates:80
+      - API_KEY=dev_api_key_123
+    ports:
+      - "8082:8082"
+    networks:
+      - ws_network
+
+  wsnode3:
+    build: ./wsnode
+    environment:
+      - NODE_ID=node3
+      - PORT=8083
+      - WS_UPDATES_URL=http://wsupdates:80
+      - API_KEY=dev_api_key_123
+    ports:
+      - "8083:8083"
+    networks:
+      - ws_network
+
+networks:
+  ws_network:
+    driver: bridge
+
+volumes:
+  ws_data:
