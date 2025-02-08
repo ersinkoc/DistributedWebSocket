@@ -1,0 +1,90 @@
+# Environment files
+.env
+*.env
+.env.*
+!.env.example
+
+# Node.js (WSNode)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+*.log
+coverage/
+dist/
+
+# PHP (WSUpdates)
+/vendor/
+composer.phar
+.phpunit.result.cache
+/logs/*
+!/logs/.gitkeep
+/database/*.sqlite
+!/database/.gitkeep
+
+# SSL Certificates
+*.pem
+*.key
+*.crt
+*.csr
+*.srl
+/haproxy/certs/*
+!/haproxy/certs/.gitkeep
+
+# HAProxy
+/haproxy/backups/*
+!/haproxy/backups/.gitkeep
+
+# Docker
+.docker/
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+!docker-compose.example.yml
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sqlite
+*.sqlite3
+debug.log
+npm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+*.tmp
+*.bak
+
+# Build output
+build/
+dist/
+out/
+
+# System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.windsurfrules
