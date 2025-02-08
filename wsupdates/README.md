@@ -110,20 +110,20 @@ erDiagram
 ```mermaid
 graph LR
     subgraph "Node Management"
-        REG[/nodes] --> ADD[POST /register]
-        REG --> UPD[PUT /update]
-        REG --> LST[GET /list]
+        REG["Nodes API"] --> ADD["Register<br/>/nodes/register"]
+        REG --> UPD["Update<br/>/nodes/update"]
+        REG --> LST["List<br/>/nodes/list"]
     end
     
     subgraph "Channel Management"
-        CH[/channels] --> CHA[POST /create]
-        CH --> CHU[PUT /update]
-        CH --> CHL[GET /list]
+        CH["Channels API"] --> CHA["Create<br/>/channels/create"]
+        CH --> CHU["Update<br/>/channels/update"]
+        CH --> CHL["List<br/>/channels/list"]
     end
     
     subgraph "Metrics"
-        MET[/metrics] --> REP[POST /report]
-        MET --> AGG[GET /aggregate]
+        MET["Metrics API"] --> REP["Report<br/>/metrics/report"]
+        MET --> AGG["Aggregate<br/>/metrics/aggregate"]
     end
     
     style REG fill:#f96,stroke:#333
