@@ -9,7 +9,7 @@ services:
     volumes:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     depends_on:
-      - wsupdates
+      - wsupdates_nodejs
       - wsnode1
       - wsnode2
       - wsnode3
@@ -19,29 +19,28 @@ services:
       - 8.8.8.8
       - 1.1.1.1
 
-  wsupdates:
-    build: ./wsupdates
+  wsupdates_nodejs:
+    build: ./wsupdates_nodejs
     environment:
       - DB_PATH=/data/ws.db
       - API_KEY=dev_api_key_123
+      - PORT=8000
     volumes:
       - ws_data:/data
     ports:
-      - "8000:80"
+      - "8000:8000"
     networks:
       - ws_network
     dns:
       - 8.8.8.8
       - 1.1.1.1
-    extra_hosts:
-      - "repo.packagist.org:8.8.8.8"
 
   wsnode1:
     build: ./wsnode
     environment:
       - NODE_ID=node1
       - PORT=8081
-      - WS_UPDATES_URL=http://wsupdates:80
+      - WS_UPDATES_URL=http://wsupdates_nodejs:8000
       - API_KEY=dev_api_key_123
     ports:
       - "8081:8081"
@@ -56,7 +55,7 @@ services:
     environment:
       - NODE_ID=node2
       - PORT=8082
-      - WS_UPDATES_URL=http://wsupdates:80
+      - WS_UPDATES_URL=http://wsupdates_nodejs:8000
       - API_KEY=dev_api_key_123
     ports:
       - "8082:8082"
@@ -71,7 +70,7 @@ services:
     environment:
       - NODE_ID=node3
       - PORT=8083
-      - WS_UPDATES_URL=http://wsupdates:80
+      - WS_UPDATES_URL=http://wsupdates_nodejs:8000
       - API_KEY=dev_api_key_123
     ports:
       - "8083:8083"
