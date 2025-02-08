@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  wsupdates:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    environment:
+      - API_KEY=${API_KEY}
+      - APP_ENV=production
+      - DEBUG=false
+    volumes:
+      - ./database:/var/www/html/database
+      - ./logs:/var/www/html/logs
+    restart: unless-stopped
+    networks:
+      - ws_network
+
+networks:
+  ws_network:
+    driver: bridge

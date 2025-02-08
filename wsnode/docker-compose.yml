@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  wsnode:
+    build: .
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    environment:
+      - NODE_ID=${NODE_ID:-wsnode_$(openssl rand -hex 4)}
+      - PORT=${PORT:-8080}
+      - WS_UPDATES_URL=${WS_UPDATES_URL:-http://wsupdates.example.com}
+      - API_KEY=${API_KEY}
+      - UPDATE_INTERVAL=30000
+    restart: unless-stopped
+    networks:
+      - ws_network
+
+networks:
+  ws_network:
+    driver: bridge

@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  haproxy:
+    build: .
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8404:8404"  # Stats page
+    volumes:
+      - ./certs:/etc/ssl/private
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    environment:
+      - WS_UPDATES_URL=${WS_UPDATES_URL:-http://wsupdates.example.com}
+      - API_KEY=${API_KEY}
+    restart: unless-stopped
+    networks:
+      - ws_network
+
+  updater:
+    build: 
+      context: .
+      dockerfile: Dockerfile.updater
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WS_UPDATES_URL=${WS_UPDATES_URL:-http://wsupdates.example.com}
+      - API_KEY=${API_KEY}
+      - UPDATE_INTERVAL=60
+    restart: unless-stopped
+    networks:
+      - ws_network
+
+networks:
+  ws_network:
+    driver: bridge

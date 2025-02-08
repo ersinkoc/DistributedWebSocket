@@ -1,0 +1,12 @@
+FROM alpine:3.18
+
+RUN apk add --no-cache python3 py3-pip curl jq
+
+WORKDIR /app
+
+COPY update_backends.py /app/
+COPY requirements.txt /app/
+
+RUN pip3 install -r requirements.txt
+
+CMD ["python3", "update_backends.py"]
