@@ -9,8 +9,8 @@
     "test": "jest"
   },
   "dependencies": {
+    "better-sqlite3": "^9.4.1",
     "express": "^4.18.2",
-    "sqlite3": "^5.1.7",
     "winston": "^3.11.0",
     "dotenv": "^16.4.1",
     "cors": "^2.8.5",

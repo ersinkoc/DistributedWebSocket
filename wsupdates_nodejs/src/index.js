@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { body, validationResult } = require('express-validator');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const winston = require('winston');
 require('dotenv').config();
 
@@ -28,15 +28,13 @@ app.use(helmet());
 
 // Initialize SQLite database
 const dbPath = process.env.DB_PATH || '/data/ws.db';
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        logger.error('Database connection failed:', err);
-        process.exit(1);
-    }
+let db;
+try {
+    db = new Database(dbPath, { verbose: logger.debug });
     logger.info('Connected to SQLite database');
     
     // Create tables if they don't exist
-    db.run(`CREATE TABLE IF NOT EXISTS nodes (
+    db.exec(`CREATE TABLE IF NOT EXISTS nodes (
         id TEXT PRIMARY KEY,
         url TEXT NOT NULL,
         status TEXT DEFAULT 'active',
@@ -44,7 +42,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
     
-    db.run(`CREATE TABLE IF NOT EXISTS channels (
+    db.exec(`CREATE TABLE IF NOT EXISTS channels (
         id TEXT PRIMARY KEY,
         node_id TEXT,
         name TEXT NOT NULL,
@@ -52,7 +50,10 @@ const db = new sqlite3.Database(dbPath, (err) => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (node_id) REFERENCES nodes(id)
     )`);
-});
+} catch (err) {
+    logger.error('Database connection failed:', err);
+    process.exit(1);
+}
 
 // Middleware for API key validation
 const validateApiKey = (req, res, next) => {
@@ -70,7 +71,7 @@ app.post('/nodes',
         body('id').isString().notEmpty(),
         body('url').isURL()
     ],
-    async (req, res) => {
+    (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
@@ -78,17 +79,15 @@ app.post('/nodes',
 
         const { id, url } = req.body;
         
-        db.run('INSERT OR REPLACE INTO nodes (id, url) VALUES (?, ?)',
-            [id, url],
-            function(err) {
-                if (err) {
-                    logger.error('Error registering node:', err);
-                    return res.status(500).json({ error: 'Failed to register node' });
-                }
-                logger.info(`Node registered: ${id}`);
-                res.status(200).json({ id, url });
-            }
-        );
+        try {
+            const stmt = db.prepare('INSERT OR REPLACE INTO nodes (id, url) VALUES (?, ?)');
+            stmt.run(id, url);
+            logger.info(`Node registered: ${id}`);
+            res.status(200).json({ id, url });
+        } catch (err) {
+            logger.error('Error registering node:', err);
+            res.status(500).json({ error: 'Failed to register node' });
+        }
     }
 );
 
@@ -99,7 +98,7 @@ app.post('/channels',
         body('nodeId').isString().notEmpty(),
         body('name').isString().notEmpty()
     ],
-    async (req, res) => {
+    (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
@@ -108,17 +107,15 @@ app.post('/channels',
         const { nodeId, name } = req.body;
         const channelId = `${nodeId}-${name}`;
         
-        db.run('INSERT OR REPLACE INTO channels (id, node_id, name) VALUES (?, ?, ?)',
-            [channelId, nodeId, name],
-            function(err) {
-                if (err) {
-                    logger.error('Error registering channel:', err);
-                    return res.status(500).json({ error: 'Failed to register channel' });
-                }
-                logger.info(`Channel registered: ${channelId}`);
-                res.status(200).json({ id: channelId, nodeId, name });
-            }
-        );
+        try {
+            const stmt = db.prepare('INSERT OR REPLACE INTO channels (id, node_id, name) VALUES (?, ?, ?)');
+            stmt.run(channelId, nodeId, name);
+            logger.info(`Channel registered: ${channelId}`);
+            res.status(200).json({ id: channelId, nodeId, name });
+        } catch (err) {
+            logger.error('Error registering channel:', err);
+            res.status(500).json({ error: 'Failed to register channel' });
+        }
     }
 );
 
@@ -126,15 +123,14 @@ app.post('/channels',
 app.get('/nodes',
     validateApiKey,
     (req, res) => {
-        db.all('SELECT * FROM nodes WHERE status = ?', ['active'],
-            (err, rows) => {
-                if (err) {
-                    logger.error('Error fetching nodes:', err);
-                    return res.status(500).json({ error: 'Failed to fetch nodes' });
-                }
-                res.json(rows);
-            }
-        );
+        try {
+            const stmt = db.prepare('SELECT * FROM nodes WHERE status = ?');
+            const nodes = stmt.all('active');
+            res.json(nodes);
+        } catch (err) {
+            logger.error('Error fetching nodes:', err);
+            res.status(500).json({ error: 'Failed to fetch nodes' });
+        }
     }
 );
 
@@ -144,16 +140,14 @@ app.get('/nodes/:nodeId/channels',
     (req, res) => {
         const { nodeId } = req.params;
         
-        db.all('SELECT * FROM channels WHERE node_id = ? AND status = ?',
-            [nodeId, 'active'],
-            (err, rows) => {
-                if (err) {
-                    logger.error('Error fetching channels:', err);
-                    return res.status(500).json({ error: 'Failed to fetch channels' });
-                }
-                res.json(rows);
-            }
-        );
+        try {
+            const stmt = db.prepare('SELECT * FROM channels WHERE node_id = ? AND status = ?');
+            const channels = stmt.all(nodeId, 'active');
+            res.json(channels);
+        } catch (err) {
+            logger.error('Error fetching channels:', err);
+            res.status(500).json({ error: 'Failed to fetch channels' });
+        }
     }
 );
 
@@ -163,19 +157,17 @@ app.post('/nodes/:nodeId/heartbeat',
     (req, res) => {
         const { nodeId } = req.params;
         
-        db.run('UPDATE nodes SET last_seen = CURRENT_TIMESTAMP WHERE id = ?',
-            [nodeId],
-            function(err) {
-                if (err) {
-                    logger.error('Error updating heartbeat:', err);
-                    return res.status(500).json({ error: 'Failed to update heartbeat' });
-                }
-                if (this.changes === 0) {
-                    return res.status(404).json({ error: 'Node not found' });
-                }
-                res.status(200).json({ status: 'ok' });
+        try {
+            const stmt = db.prepare('UPDATE nodes SET last_seen = CURRENT_TIMESTAMP WHERE id = ?');
+            const result = stmt.run(nodeId);
+            if (result.changes === 0) {
+                return res.status(404).json({ error: 'Node not found' });
             }
-        );
+            res.status(200).json({ status: 'ok' });
+        } catch (err) {
+            logger.error('Error updating heartbeat:', err);
+            res.status(500).json({ error: 'Failed to update heartbeat' });
+        }
     }
 );
 

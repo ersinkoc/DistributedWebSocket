@@ -1,9 +1,9 @@
 FROM node:20-alpine
 
-WORKDIR /app
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ sqlite sqlite-dev
 
-# Install system dependencies
-RUN apk add --no-cache sqlite sqlite-dev python3 make g++
+WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
@@ -11,16 +11,14 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy application files
+# Copy source code
 COPY . .
 
-# Create data directory with proper permissions
-RUN mkdir -p /data \
-    && chown -R node:node /data /app
+# Create data directory
+RUN mkdir -p /data && chown -R node:node /data /app
 
 # Switch to non-root user
 USER node
 
 EXPOSE 8000
-
 CMD ["npm", "start"]
