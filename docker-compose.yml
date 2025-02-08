@@ -33,6 +33,8 @@ services:
     dns:
       - 8.8.8.8
       - 1.1.1.1
+    extra_hosts:
+      - "repo.packagist.org:8.8.8.8"
 
   wsnode1:
     build: ./wsnode

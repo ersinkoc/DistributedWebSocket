@@ -21,11 +21,9 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
-# Set DNS resolvers and install dependencies
+# Install dependencies
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf \
-    && echo "nameserver 1.1.1.1" >> /etc/resolv.conf \
-    && composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Configure Apache
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
